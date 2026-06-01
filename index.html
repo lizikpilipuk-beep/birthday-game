@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Угадай возраст именинницы по фото</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #ffe9e4 0%, #ffd9ce 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255,248,245,0.96);
+            border-radius: 28px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #b13e3e;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .sub {
+            text-align: center;
+            color: #e28b6f;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        .photo-card {
+            background: white;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+        .photo-card img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            background: #f5e6e0;
+        }
+        .card-content {
+            flex: 1;
+            padding: 12px 15px;
+        }
+        .card-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #5a3e35;
+        }
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .input-group input {
+            flex: 1;
+            min-width: 80px;
+            padding: 10px 12px;
+            border: 2px solid #f0cdbe;
+            border-radius: 30px;
+            font-size: 16px;
+            text-align: center;
+            font-family: inherit;
+        }
+        .input-group button {
+            background: #e28b6f;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .input-group button:active {
+            transform: scale(0.96);
+        }
+        .feedback {
+            font-size: 13px;
+            padding: 8px 12px;
+            border-radius: 16px;
+            margin-top: 5px;
+        }
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+        }
+        .feedback.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .feedback.waiting {
+            background: #fff0e6;
+            color: #b45f4a;
+        }
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0 15px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            background: #b95f44;
+            color: white;
+            font-family: inherit;
+        }
+        .btn.reset {
+            background: #6c757d;
+        }
+        .score {
+            text-align: center;
+            padding: 15px;
+            background: #fff0ea;
+            border-radius: 50px;
+            font-weight: bold;
+            color: #b7583a;
+            margin-top: 15px;
+        }
+        @media (max-width: 550px) {
+            .photo-card img {
+                width: 100%;
+                height: auto;
+                max-height: 200px;
+            }
+            .container { padding: 15px; }
+            h1 { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎂 Угадай возраст именинницы по фото 🎈</h1>
+    <div class="sub">👇 Введи возраст (число) и нажми «Проверить»</div>
+    
+    <div id="gallery"></div>
+    
+    <div class="buttons">
+        <button class="btn" id="checkAllBtn">✅ Проверить всё</button>
+        <button class="btn reset" id="resetAllBtn">🔄 Очистить всё</button>
+    </div>
+    <div id="scoreDisplay" class="score">✨ Нажми «Проверить» для каждого фото ✨</div>
+</div>
+
+<script>
+    // ==================== 🔽 ВАШИ ДАННЫЕ (ЗАМЕНИТЕ НА СВОИ) ====================
+    // Путь к фото: "/images/имя_файла.jpg" (начинается с /)
+    // age — правильный возраст для каждого фото
+    const photos = [
+        { src: "/images/1.jpg", alt: "Фото 1", age: 10 },
+        { src: "/images/2.jpg", alt: "Фото 2", age: 4 },
+        { src: "/images/3.jpg", alt: "Фото 3", age: 2 },
+        { src: "/images/4.jpg", alt: "Фото 4", age: 18 },
+        { src: "/images/5.jpg", alt: "Фото 5", age: 1 },
+        { src: "/images/6.jpg", alt: "Фото 6", age: 12 },
+        { src: "/images/7.jpg", alt: "Фото 7", age: 20 },
+        { src: "/images/8.jpg", alt: "Фото 8", age: 15 },
+        { src: "/images/9.jpg", alt: "Фото 9", age: 6 },
+        { src: "/images/10.jpg", alt: "Фото 10", age: 8 }
+    ];
+    // ==================== 🔼 ВЫШЕ ВСТАВЬТЕ СВОИ ДАННЫЕ ====================
+    
+    let answers = {};
+    let statuses = {};
+    
+    function render() {
+        const container = document.getElementById('gallery');
+        container.innerHTML = '';
+        
+        photos.forEach((photo, idx) => {
+            const userValue = answers[idx] || '';
+            const status = statuses[idx];
+            
+            const card = document.createElement('div');
+            card.className = 'photo-card';
+            
+            const img = document.createElement('img');
+            img.src = photo.src;
+            img.alt = photo.alt;
+            img.onerror = () => {
+                img.style.display = 'none';
+                const errorMsg = document.createElement('div');
+                errorMsg.textContent = '⚠️ Фото не загрузилось';
+                errorMsg.style.cssText = 'background:#ffe0e0; padding:10px; text-align:center; font-size:12px; width:120px; display:flex; align-items:center;';
+                if (card.firstChild) card.insertBefore(errorMsg, card.firstChild);
+            };
+            
+            const content = document.createElement('div');
+            content.className = 'card-content';
+            
+            const title = document.createElement('div');
+            title.className = 'card-title';
+            title.textContent = photo.alt;
+            
+            const inputGroup = document.createElement('div');
+            inputGroup.className = 'input-group';
+            
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.placeholder = 'Возраст';
+            input.value = userValue;
+            input.oninput = (e) => {
+                answers[idx] = e.target.value;
+                delete statuses[idx];
+                render();
+            };
+            
+            const checkBtn = document.createElement('button');
+            checkBtn.textContent = 'Проверить';
+            checkBtn.onclick = () => {
+                const val = answers[idx];
+                if (!val || val.trim() === '') {
+                    alert('Введите возраст цифрами');
+                    return;
+                }
+                const num = parseInt(val, 10);
+                if (isNaN(num) || num < 1 || num > 120) {
+                    alert('Введите реальный возраст (от 1 до 120)');
+                    return;
+                }
+                statuses[idx] = {
+                    isCorrect: (num === photo.age),
+                    correctAge: photo.age,
+                    userAge: num
+                };
+                render();
+            };
+            
+            inputGroup.appendChild(input);
+            inputGroup.appendChild(checkBtn);
+            
+            const feedback = document.createElement('div');
+            feedback.className = 'feedback';
+            if (status) {
+                if (status.isCorrect) {
+                    feedback.textContent = `✅ Верно! ${status.userAge} лет!`;
+                    feedback.classList.add('correct');
+                } else {
+                    feedback.textContent = `❌ Неверно. Правильно: ${status.correctAge} лет, а вы ввели ${status.userAge}`;
+                    feedback.classList.add('incorrect');
+                }
+            } else if (userValue) {
+                feedback.textContent = `📝 Введено: ${userValue}. Нажмите "Проверить"`;
+                feedback.classList.add('waiting');
+            } else {
+                feedback.textContent = `✏️ Напишите возраст и нажмите кнопку`;
+                feedback.classList.add('waiting');
+            }
+            
+            content.appendChild(title);
+            content.appendChild(inputGroup);
+            content.appendChild(feedback);
+            
+            card.appendChild(img);
+            card.appendChild(content);
+            container.appendChild(card);
+        });
+        
+        updateScore();
+    }
+    
+    function updateScore() {
+        let correct = 0;
+        let checked = 0;
+        for (let i = 0; i < photos.length; i++) {
+            if (statuses[i]) {
+                checked++;
+                if (statuses[i].isCorrect) correct++;
+            }
+        }
+        const scoreDiv = document.getElementById('scoreDisplay');
+        if (checked === 0) {
+            scoreDiv.innerHTML = '📸 Введите возраст под каждым фото и нажмите «Проверить»';
+        } else {
+            scoreDiv.innerHTML = `🎯 Угадано: ${correct} из ${checked} проверенных фото. ${correct === photos.length ? '🎉 ИДЕАЛЬНО! 🎉' : 'Продолжайте!'}`;
+        }
+    }
+    
+    function checkAll() {
+        for (let i = 0; i < photos.length; i++) {
+            const val = answers[i];
+            if (val && val.trim() !== '') {
+                const num = parseInt(val, 10);
+                if (!isNaN(num) && num >= 1 && num <= 120) {
+                    statuses[i] = {
+                        isCorrect: (num === photos[i].age),
+                        correctAge: photos[i].age,
+                        userAge: num
+                    };
+                }
+            }
+        }
+        render();
+    }
+    
+    function resetAll() {
+        answers = {};
+        statuses = {};
+        render();
+    }
+    
+    document.getElementById('checkAllBtn').onclick = checkAll;
+    document.getElementById('resetAllBtn').onclick = resetAll;
+    
+    render();
+</script>
+</body>
+</html>
